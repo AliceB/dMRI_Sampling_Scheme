@@ -31,8 +31,8 @@ function [TT_updated min_cond_vec] = nsht_ordered_theta(L)
 
 try
     
-    load(['theta_locations/theta_step4_MAX_ANGLE_pi_L_',num2str(L),'.mat']);
-    
+    %load(['theta_locations/theta_step4_MAX_ANGLE_pi_L_',num2str(L),'.mat']);
+    load(['theta_locations/theta_antipodal_NEW_L_',num2str(L),'.mat']);
   
     return
 catch err
@@ -50,34 +50,45 @@ catch err
 
     for m = L-3:-2:0
             
-             [P Sc] = nsht_legmat_mex(TT, L, m); 
-                        
-            index = 1:2:(L-m);
-            Y_mat = zeros(length(index),length(index));
+             [P_mat_1 Sc_1] = nsht_legmat_mex(TT, L, m); 
+             [P_mat_2 Sc_2] = nsht_legmat_mex(TT, L, m-1); %m odd            
+            index_1 = 1:2:(L-m);
+            index_2 = 2:2:L-m;
+            
+            Y_mat_1 = zeros(length(index_1),length(index_1));
+            Y_mat_2 = zeros(length(index_2),length(index_2));
 
-            PP = 10.^Sc.*P;
-            PP = PP(index,:); %keep only even degree rows
+            PP_1 = 10.^Sc_1.*P_mat_1;
+            PP_1 = PP_1(index_1,:); %keep only even degree rows
 
-
+            PP_2 = 10.^Sc_2.*P_mat_2;
+            PP_2 = PP_2(index_2,:); %keep only even degree rows
+            
+            
             for jj=1:1:length(TT_ordered_index)
-                Y_mat(:,jj) = PP(:,TT_ordered_index(jj));
+                Y_mat_1(:,jj) = PP_1(:,TT_ordered_index(jj));
             end
 
+            for jj=1:1:length(TT_ordered_index)
+                Y_mat_2(:,jj) = PP_2(:,TT_ordered_index(jj));
+            end
 
             ii_vec=[];
-            cond_vec = [];
-            
+            cond_vec_1 = [];
+            cond_vec_2 = [];
             for ii=1:1:length(TT)
 
 
                 if isempty(find(TT_ordered_index==ii))
-                    Y_mat(:,end) = PP(:,ii);
+                    Y_mat_1(:,end) = PP_1(:,ii);
+                    Y_mat_2(:,end) = PP_2(:,ii);
                     ii_vec = [ii_vec ii];
-                    cond_vec = [cond_vec cond(Y_mat)];
+                    cond_vec_1 = [cond_vec_1 cond(Y_mat_1)];
+                    cond_vec_2 = [cond_vec_2 cond(Y_mat_2)];
                 end
             end
 
-            [M,II] =min(cond_vec);
+            [M,II] =min(cond_vec_1 + cond_vec_2);
 
             min_cond_vec = [min_cond_vec M];
             TT_ordered_index = [ ii_vec(II) TT_ordered_index];
@@ -85,8 +96,11 @@ catch err
     end
 
     TT_updated = TT(TT_ordered_index);
+    
+    save(['theta_locations/theta_antipodal_L_' num2str(L) '.mat'], 'TT_updated', 'min_cond_vec');
     %%save theta locations - NOTE MAY HAVE TO CHANGE VALUE OF MAX ANGLE
-    save(['theta_locations/theta_step4_MAX_ANGLE_pi_L_' num2str(L) '.mat'], 'TT_updated', 'min_cond_vec');
+   % save(['theta_locations/theta_step4_MAX_ANGLE_pi_L_' num2str(L) '.mat'], 'TT_updated', 'min_cond_vec');
+   
 end %% end try/catch
 
 end

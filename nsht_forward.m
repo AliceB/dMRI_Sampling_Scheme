@@ -89,8 +89,8 @@ end
         flm_imag = zeros(1,(L)^2);
         f_real = real(f);
         f_imag = imag(f);
-        fft_v_real = zeros(size(f_real));
-        fft_v_imag = zeros(size(f_imag));
+        fft_v_real = zeros(1,(L)^2);
+        fft_v_imag = zeros(1,(L)^2);
 
         [THETA, FI] = nsht_sampling_points(L); 
                
@@ -171,19 +171,29 @@ function f_t = nsht_spatial_elimination(P_mat, f_t, flm_t,  FI_t, m)
 % THETA_t, FI_t, the truncated spatial grid.
 % m order
 % L is the band-limit
-
-
-gm = transpose(P_mat(:,1:m/2))*flm_t.'; %had to add in transpose
-gm_neg = conj(transpose(P_mat(:,1:m/2))*flm_t.');
-
 f_temp=zeros(size(FI_t));
 f_temp_neg=zeros(size(FI_t));
 
-%assigning gm(theta) to the correct  f(theta, phi)
-for ii=0:m/2-1
-   f_temp(2*ii^2-ii+1:2*ii^2+3*ii+1) = gm(ii+1); 
-   f_temp_neg(2*ii^2-ii+1:2*ii^2+3*ii+1) = gm_neg(ii+1); 
+if mod(m,2) == 0 % m even
+    gm = transpose(P_mat(:,1:m/2))*flm_t; 
+    gm_neg = conj(transpose(P_mat(:,1:m/2))*flm_t);
+    %assigning gm(theta) to the correct  f(theta, phi)
+    for ii=0:m/2-1
+       f_temp(2*ii^2-ii+1:2*ii^2+3*ii+1) = gm(ii+1); 
+       f_temp_neg(2*ii^2-ii+1:2*ii^2+3*ii+1) = gm_neg(ii+1); 
+    end
+else
+     gm = transpose(P_mat(:,1:(m+1)/2))*flm_t; 
+    gm_neg = conj(transpose(P_mat(:,1:(m+1)/2))*flm_t);
+    %assigning gm(theta) to the correct  f(theta, phi)
+    for ii=0:(m+1)/2-1
+       f_temp(2*ii^2-ii+1:2*ii^2+3*ii+1) = gm(ii+1); 
+       f_temp_neg(2*ii^2-ii+1:2*ii^2+3*ii+1) = gm_neg(ii+1); 
+    end
 end
+
+
+
 
 % no need of condition on m here because the spatial elimination is not run
 % for m=0. (Verified. 15/11/2013)
@@ -218,9 +228,12 @@ else
     P = P_mat(2:2:end,(m+1)/2+1:end);
 end
 
+global conditionNum;
+conditionNum(m + 1)= cond(P);
+
 flm_short = (transpose(P))\transpose(b);
 flm_t = zeros(1,L-m);
-if mod(m,2) == 0 % m even\
+if mod(m,2) == 0 % m even
     for i = 1: length(flm_short)
         flm_t((i*2)-1) = flm_short(i);
     end
@@ -231,6 +244,7 @@ else
 
 end
 
+flm_t = transpose(flm_t);
 
 end
 

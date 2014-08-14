@@ -12,14 +12,14 @@
 MAX_AZ_ANGLE = pi; %the maximum co-latitude angle over which sample rings are placed
 THETA_FAC = 90; %how many spare rings to choose from in multiplicative terms
 
-for L = [5,7]
+for L = 5:4:61
     
         TT_temp = MAX_AZ_ANGLE*(0.00000001:(THETA_FAC*L))/((THETA_FAC*L)) ; 
 
 
         LL = length(TT_temp); %how many theta locations to choose from
 
-        index_final = 1;
+        index_final = 1; %select first sample from north pole
         m=0;
         %%
 
@@ -30,12 +30,12 @@ for L = [5,7]
             
             PP = 10.^Sc.*P;
             
-            PP = PP(1:2:(ell-m),:); %keep only even degree rows
+          %  PP = PP(1:2:(ell-m),:); %keep only even degree rows
             cond_vec = 10^18*ones(1,LL);
 
                 for ii=1:1:LL
                   cond_temp = cond( transpose(PP(:,[ii index_final])));
-                    if cond_temp<min(cond_vec)
+                    if cond_temp < min(cond_vec)
                         c_temp = cond_temp;
                         II_final = ii;
 
@@ -56,7 +56,7 @@ for L = [5,7]
         %%
         theta_final = TT_temp(index_final);
         %%save the theta locations
-        str = ['theta_locations/theta_ring_locations_step1_3_MAX_ANGLE_pi_L',num2str(L),'.mat'];
+        str = ['theta_locations\theta_ring_locations_step1_3_MAX_ANGLE_pi_L',num2str(L),'.mat'];
         save(str,'theta_final'); 
  
 end
